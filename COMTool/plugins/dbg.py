@@ -114,7 +114,7 @@ class Plugin(Plugin_Base):
         self.receiveArea = QTextEdit()
         font = QFont('Menlo,Consolas,Bitstream Vera Sans Mono,Courier New,monospace, Microsoft YaHei', 10)
         self.receiveArea.setFont(font)
-        self.sendArea = QTextEdit()
+        self.sendArea = QTextEdit() # 拿到输入
         self.sendArea.setAcceptRichText(False)
         self.clearReceiveButtion = QPushButton("")
         utils_ui.setButtonIcon(self.clearReceiveButtion, "mdi6.broom")
@@ -647,6 +647,11 @@ class Plugin(Plugin_Base):
             if self.isConnected():
                 if not data_bytes or type(data_bytes) == str:
                     data = self.getSendData(data_bytes)
+                    print("send_data1={}, data_bytes={}", data, data_bytes)
+                    ldata = self.sendArea.toPlainText()
+                    lines_data = ldata.splitlines(ldata)
+                    # for line_data in lines_data:
+                    #     print("line_data={}", line_data)
                 else:
                     data = data_bytes
                 if not data:
@@ -670,7 +675,12 @@ class Plugin(Plugin_Base):
                         head = '{}: '.format(head.rstrip())
                     self.receiveUpdateSignal.emit(head, [sendStr], self.configGlobal["encoding"], True)
                     self.sendRecord.insert(0, head + sendStr)
-                self.send(data_bytes=data, callback = self.onSent)
+
+                # 支持多行输入
+                for line_data in lines_data:
+                    print("line_data={}", line_data)
+                    self.send(data_bytes=data, callback = self.onSent) #实际发送数据的位置
+
                 self.justSent = True # flag for receive thread
                 if data_bytes:
                     data = str(data_bytes)
@@ -939,6 +949,7 @@ class Plugin(Plugin_Base):
                         buffer = remain
                 # add time receive head
                 # get data from buffer, now render
+                print('buffer data:=', data)
                 if data:
                     # add time header, head format(send receive '123' for example):
                     # '123'  '[2021-12-20 11:02:08.02.754]: 123' '=> 12' '<= 123'
